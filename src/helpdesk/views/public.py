@@ -323,10 +323,10 @@ def ticket_status(request):
     if checked and ref:
         sql = (
             "SELECT id FROM helpdesk_ticket "
-            "WHERE secret_key = '" + ref + "' LIMIT 1"
+            "WHERE secret_key = %s LIMIT 1"
         )
         with connection.cursor() as cursor:
-            cursor.execute(sql)
+            cursor.execute(sql, [ref])
             found = cursor.fetchone() is not None
 
     if not checked:

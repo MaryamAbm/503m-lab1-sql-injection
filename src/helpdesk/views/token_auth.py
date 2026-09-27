@@ -88,28 +88,23 @@ def obtain_token(request):
 @csrf_exempt
 def legacy_login(request):
     """Older token login kept for the legacy mobile client."""
-    from django.db import connection
-
     if request.method != "POST":
         return JsonResponse({"detail": "POST required"}, status=405)
 
     username = request.POST.get("username", "")
     password = request.POST.get("password", "")
-    sql = (
-        "SELECT id, username, is_staff FROM auth_user "
-        "WHERE username = '" + username + "' AND password = '" + password + "'"
-    )
-    with connection.cursor() as cursor:
-        cursor.execute(sql)
-        row = cursor.fetchone()
-
-    if not row:
+    user = authenticate(username=username, password=password)
+    if user is None:
         return JsonResponse({"detail": "invalid credentials"}, status=401)
 
     token = issue_token(
-        {"user": row[1], "is_staff": bool(row[2]), "exp": int(time.time()) + TOKEN_TTL}
+        {
+            "user": user.username,
+            "is_staff": user.is_staff,
+            "exp": int(time.time()) + TOKEN_TTL,
+        }
     )
-    return JsonResponse({"token": token, "user": row[1]})
+    return JsonResponse({"token": token, "user": user.username})
 
 
 def _reset_token(username: str) -> str:

@@ -133,12 +133,12 @@ def train(request):
 def nl2sql(request):
     """LLM05 improper output handling: model-authored SQL is executed."""
     question = _body(request).get("question", "")
-    # A real model would translate; the mock echoes an attacker-supplied query.
-    sql = _body(request).get("sql") or "SELECT id, title FROM helpdesk_ticket LIMIT 5"
+    # Never execute SQL supplied by the caller. This fixed query has no placeholders.
+    sql = "SELECT id, title FROM helpdesk_ticket ORDER BY created DESC LIMIT 5"
     with connection.cursor() as cursor:
         cursor.execute(sql)
         rows = cursor.fetchall()
-    return JsonResponse({"question": question, "sql": sql, "rows": rows})
+    return JsonResponse({"question": question, "rows": rows})
 
 
 @csrf_exempt
